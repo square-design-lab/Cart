@@ -33,6 +33,9 @@
     animDuration: 320,
     showItemCount: true,
     followCartStyles: true,       // inherit /cart page typography + buttons
+    useCustomColors: true,        // when false, ignore any custom COLOURS in
+                                  // `styles` and use the /cart page's colours
+                                  // (non-colour styles like radii still apply)
     styles: {}                    // explicit overrides (win over the sync)
   };
 
@@ -80,10 +83,19 @@
     checkoutBorderRadius: '--sdl-sc-checkout-radius',
     checkoutFontSize: '--sdl-sc-checkout-size'
   };
+  // Which style keys are colours (gated by useCustomColors).
+  var COLOR_KEYS = {
+    drawerBg: 1, overlayColor: 1, headerBg: 1, headerBorderColor: 1, titleColor: 1,
+    itemNameColor: 1, itemVariantColor: 1, itemPriceColor: 1, qtyBtnBg: 1, qtyBtnColor: 1,
+    removeColor: 1, removeHoverColor: 1, subtotalBg: 1, subtotalBorderColor: 1,
+    subtotalColor: 1, checkoutBg: 1, checkoutColor: 1, closeBtnColor: 1
+  };
+  function colorAllowed(key) { return CFG.useCustomColors !== false || !COLOR_KEYS[key]; }
+
   // CSS vars the USER explicitly set (so the cart sync won't clobber them).
   var userVarSet = {};
   Object.keys(STYLE_VARS).forEach(function (k) {
-    if (USER_STYLES[k] !== undefined && USER_STYLES[k] !== null && USER_STYLES[k] !== '') {
+    if (USER_STYLES[k] !== undefined && USER_STYLES[k] !== null && USER_STYLES[k] !== '' && colorAllowed(k)) {
       userVarSet[STYLE_VARS[k]] = true;
     }
   });
@@ -205,9 +217,12 @@
       '--sdl-sc-price-font': t.price.font, '--sdl-sc-price-size': t.price.size, '--sdl-sc-price-weight': t.price.weight,
       '--sdl-sc-price-ls': t.price.ls, '--sdl-sc-price-color': t.price.color, '--sdl-sc-price-lh': t.price.lh
     });
+    // Variant colour deliberately NOT synced: the cart page shows variants in
+    // the product-name colour at 0.6 opacity, which the CSS reproduces by
+    // falling back to --sdl-sc-name-color. Only typography is inherited here.
     if (t.variant) setVars(r, {
       '--sdl-sc-variant-font': t.variant.font, '--sdl-sc-variant-size': t.variant.size, '--sdl-sc-variant-weight': t.variant.weight,
-      '--sdl-sc-variant-ls': t.variant.ls, '--sdl-sc-variant-color': t.variant.color, '--sdl-sc-variant-lh': t.variant.lh
+      '--sdl-sc-variant-ls': t.variant.ls, '--sdl-sc-variant-lh': t.variant.lh
     });
     if (t.sublabel) setVars(r, {
       '--sdl-sc-sublabel-font': t.sublabel.font, '--sdl-sc-sublabel-size': t.sublabel.size, '--sdl-sc-sublabel-weight': t.sublabel.weight,
@@ -374,10 +389,24 @@
   function applyStyles(root) {
     var s = CFG.styles || {};
     Object.keys(STYLE_VARS).forEach(function (key) {
-      if (s[key] !== undefined && s[key] !== null && s[key] !== '') {
+      if (s[key] !== undefined && s[key] !== null && s[key] !== '' && colorAllowed(key)) {
         root.style.setProperty(STYLE_VARS[key], s[key]);
+        // A custom variant colour should show at full strength, not the
+        // default 0.6 opacity used to mirror the cart page.
+        if (key === 'itemVariantColor') root.style.setProperty('--sdl-sc-variant-opacity', '1');
       }
     });
+    computeQtyRadius(root);
+  }
+
+  // Round the quantity box only when the product image or the drawer itself
+  // is rounded — otherwise keep it square.
+  function computeQtyRadius(root) {
+    var cs = getComputedStyle(root);
+    function nonZero(v) { return v && parseFloat(v) > 0; }
+    var rounded = nonZero(cs.getPropertyValue('--sdl-sc-image-radius')) ||
+                  nonZero(cs.getPropertyValue('--sdl-sc-border-radius'));
+    root.style.setProperty('--sdl-sc-qty-radius', rounded ? '4px' : '0px');
   }
 
   /* ---- 6. Rendering ------------------------------------------------ */
@@ -456,6 +485,7 @@
   /* ---- 7. Open / close --------------------------------------------- */
   function open(prefetchedCart) {
     if (!els.root) buildShell();
+    pinCancelled = true;   // cart is now interactive; stop pinning the badge
     state.open = true;
     els.overlay.classList.add('is-open');
     els.overlay.setAttribute('aria-hidden', 'false');
@@ -566,14 +596,29 @@
     });
     return found ? total : null;
   }
-  function syncNativeBadge(cart) {
-    var total = ((cart && cart.items) || []).reduce(function (s, it) { return s + (it.quantity || 0); }, 0);
+  function writeBadge(total) {
     writingBadge = true;
     document.querySelectorAll(CART_QTY_SEL).forEach(function (el) {
-      if (String(el.textContent).trim() !== String(total)) el.textContent = total;
+      if ((el.textContent || '').replace(/[^0-9]/g, '') !== String(total)) el.textContent = total;
     });
     lastCount = total;
-    setTimeout(function () { writingBadge = false; }, 0);
+    clearTimeout(writeBadge._t);
+    writeBadge._t = setTimeout(function () { writingBadge = false; }, 0);
+  }
+  function syncNativeBadge(cart) { writeBadge(cartQty(cart)); }
+
+  // On reload, Squarespace re-hydrates its header count from its own cached
+  // cart state, which can be momentarily stale (a wrong number that flashes
+  // before settling) — most noticeably after the drawer edited the cart via
+  // the API. We pin the badge to the authoritative count for a short window
+  // after load so any stale value is corrected instantly.
+  var pinCancelled = false;
+  function pinBadge(count, ms) {
+    var start = Date.now();
+    (function tick() {
+      writeBadge(count);
+      if (!pinCancelled && Date.now() - start < ms) setTimeout(tick, 60);
+    })();
   }
   function onItemAdded() { if (CFG.openOnAdd) open(); else refresh(); }
 
@@ -608,6 +653,7 @@
   }
   document.addEventListener('click', function (e) {
     if (!e.target.closest(ADD_BTN_SEL)) return;
+    pinCancelled = true;               // a real add may change the count — stop pinning
     pollForAdd(cartQty(state.cart));   // baseline captured before the add commits
   }, true);
 
@@ -620,9 +666,10 @@
     lastCount = readBadgeCount();
     // Authoritative baseline: whatever is already in the cart is NOT an add.
     API.fetchCart().then(function (cart) {
-      var total = ((cart && cart.items) || []).reduce(function (s, it) { return s + (it.quantity || 0); }, 0);
+      var total = cartQty(cart);
       lastCount = total;
       badgeReady = true;
+      pinBadge(total, 1200);   // hide Squarespace's stale-hydration flash
     }).catch(function () { badgeReady = true; });
     // Safety net in case the fetch hangs.
     setTimeout(function () { badgeReady = true; }, 2500);

@@ -26,17 +26,20 @@
   --sdl-sc-header-bg: #ffffff;
   --sdl-sc-header-border: #e5e5e5;
 
-  --sdl-sc-close-color: #555555;
+  /* Close icon follows the (readable) title colour so it stays visible on
+     any drawer background — light on dark, dark on light. */
+  --sdl-sc-close-color: var(--sdl-sc-title-color);
   --sdl-sc-close-size: 20px;
 
-  --sdl-sc-item-border: #ececec;
-  --sdl-sc-image-radius: 4px;
+  --sdl-sc-item-border: color-mix(in srgb, var(--sdl-sc-name-color) 14%, transparent);
+  --sdl-sc-image-radius: 0px;
 
-  --sdl-sc-qty-border: #e0e0e0;
-  --sdl-sc-qty-btn-bg: #f4f4f4;
-  --sdl-sc-qty-btn-color: #1a1a1a;
+  /* A subtle line that tracks the text colour (lower opacity). */
+  --sdl-sc-line: color-mix(in srgb, var(--sdl-sc-name-color) 38%, transparent);
+  --sdl-sc-qty-radius: 0px;   /* set to a small radius by JS when the image/drawer is rounded */
 
-  --sdl-sc-remove-color: #aaaaaa;
+  /* Remove icon follows the item text colour so it's always visible. */
+  --sdl-sc-remove-color: var(--sdl-sc-name-color);
   --sdl-sc-remove-hover: #e53e3e;
 
   --sdl-sc-subtotal-bg: transparent;
@@ -70,7 +73,10 @@
   --sdl-sc-variant-size: 13px;
   --sdl-sc-variant-weight: 400;
   --sdl-sc-variant-ls: normal;
-  --sdl-sc-variant-color: #888888;
+  /* Variant text: same colour as the product name, lower opacity — matches
+     the native /cart page. (No --sdl-sc-variant-color set, so it falls back
+     to the name colour; a custom value overrides both colour and opacity.) */
+  --sdl-sc-variant-opacity: 0.6;
   --sdl-sc-variant-lh: 1.5;
 
   --sdl-sc-sublabel-font: inherit;
@@ -236,7 +242,8 @@
   font-size: var(--sdl-sc-variant-size);
   font-weight: var(--sdl-sc-variant-weight);
   letter-spacing: var(--sdl-sc-variant-ls);
-  color: var(--sdl-sc-variant-color);
+  color: var(--sdl-sc-variant-color, var(--sdl-sc-name-color));
+  opacity: var(--sdl-sc-variant-opacity);
   line-height: var(--sdl-sc-variant-lh);
 }
 .sdl-sc__price-row {
@@ -254,31 +261,37 @@
   line-height: var(--sdl-sc-price-lh);
 }
 
-/* Quantity stepper */
+/* Quantity stepper — no button fills; a thin outline + inner dividers that
+   track the item text colour (at lower opacity). Rounded only when the
+   image or drawer is rounded (--sdl-sc-qty-radius is set by JS). */
 .sdl-sc__qty {
   display: flex;
   align-items: center;
-  border: 1px solid var(--sdl-sc-qty-border);
-  border-radius: 4px;
+  color: var(--sdl-sc-name-color);
+  border: 1px solid var(--sdl-sc-name-color);   /* fallback for no color-mix */
+  border-color: var(--sdl-sc-line);
+  border-radius: var(--sdl-sc-qty-radius);
   overflow: hidden;
 }
 .sdl-sc__qty-btn {
   appearance: none;
   width: 28px;
   height: 28px;
-  border: none;
+  border: 0 solid var(--sdl-sc-line);
   cursor: pointer;
-  background: var(--sdl-sc-qty-btn-bg);
-  color: var(--sdl-sc-qty-btn-color);
+  background: transparent;
+  color: var(--sdl-sc-name-color);
   font-size: 16px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: filter 0.15s;
+  transition: opacity 0.15s;
 }
-.sdl-sc__qty-btn:hover { filter: brightness(0.94); }
-.sdl-sc__qty-btn:disabled { opacity: 0.4; cursor: default; }
+.sdl-sc__qty-btn[data-act="dec"] { border-right-width: 1px; }
+.sdl-sc__qty-btn[data-act="inc"] { border-left-width: 1px; }
+.sdl-sc__qty-btn:hover { opacity: 0.6; }
+.sdl-sc__qty-btn:disabled { opacity: 0.35; cursor: default; }
 .sdl-sc__qty-val {
   min-width: 32px;
   text-align: center;
@@ -296,11 +309,12 @@
   padding: 4px;
   border-radius: 3px;
   color: var(--sdl-sc-remove-color);
+  opacity: 0.55;
   display: flex;
   align-items: center;
-  transition: color 0.15s;
+  transition: color 0.15s, opacity 0.15s;
 }
-.sdl-sc__remove:hover { color: var(--sdl-sc-remove-hover); }
+.sdl-sc__remove:hover { opacity: 1; color: var(--sdl-sc-remove-hover); }
 
 /* ---- Shared button look (checkout + continue) --------------------- */
 .sdl-sc__btn {
@@ -393,8 +407,9 @@
 .sdl-sc__spinner {
   width: 26px;
   height: 26px;
-  border: 3px solid rgba(0, 0, 0, 0.12);
-  border-top-color: rgba(0, 0, 0, 0.5);
+  color: var(--sdl-sc-name-color);
+  border: 3px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-top-color: currentColor;
   border-radius: 50%;
   animation: sdl-sc-spin 0.7s linear infinite;
 }

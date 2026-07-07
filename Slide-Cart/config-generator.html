@@ -393,7 +393,7 @@ pre {
 
       <div class="field">
         <label>Image Border Radius</label>
-        <input type="text" id="imageRadius" value="4px" />
+        <input type="text" id="imageRadius" value="0px" />
       </div>
     </div>
 
@@ -420,6 +420,19 @@ pre {
     <div class="section">
       <div class="section-title">Colors</div>
 
+      <div class="field">
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="useCustomColors">
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+          <label for="useCustomColors">Use custom colors</label>
+        </div>
+        <div class="hint">When off, the slide cart uses your <b>/cart</b> page's color scheme automatically.</div>
+      </div>
+
+      <div id="colorSettings" style="display:none">
       <div class="field-row">
         <div class="field">
           <label>Drawer Background</label>
@@ -468,12 +481,13 @@ pre {
           <input type="color" id="removeHoverColor" value="#e53e3e" />
         </div>
       </div>
+      </div><!-- /#colorSettings -->
     </div>
 
     <!-- CHECKOUT BUTTON -->
     <div class="section">
       <div class="section-title">Checkout Button</div>
-      <div class="field-row">
+      <div class="field-row sdl-color-only" style="display:none">
         <div class="field">
           <label>Background</label>
           <input type="color" id="checkoutBg" value="#1a1a1a" />
@@ -611,6 +625,7 @@ var DEFAULTS = {
   checkoutLabel: 'Checkout',
   continueLabel: 'Continue Shopping',
   showContinueWithItems: false,
+  useCustomColors: false,
   drawerWidth: '420px',
   animDuration: 320,
   styles: {
@@ -636,7 +651,7 @@ var DEFAULTS = {
     qtyBtnColor: '#1a1a1a',
     closeBtnColor: '#888888',
     closeBtnSize: '22px',
-    imageRadius: '4px',
+    imageRadius: '0px',
     borderRadius: '0px'
   }
 };
@@ -651,6 +666,27 @@ function getValue(id) {
 }
 
 function collectConfig() {
+  var custom = getValue('useCustomColors');
+  // Non-colour styles always apply; colours only when "Use custom colors" is on.
+  var styles = {
+    checkoutBorderRadius: getValue('checkoutBorderRadius'),
+    checkoutFontSize: getValue('checkoutFontSize'),
+    borderRadius: getValue('borderRadius'),
+    imageRadius: getValue('imageRadius')
+  };
+  if (custom) {
+    styles.drawerBg = getValue('drawerBg');
+    styles.overlayColor = getValue('overlayColor');
+    styles.headerBg = getValue('headerBg');
+    styles.headerBorderColor = getValue('headerBorderColor');
+    styles.titleColor = getValue('titleColor');
+    styles.itemNameColor = getValue('itemNameColor');
+    styles.itemVariantColor = getValue('itemVariantColor');
+    styles.removeColor = getValue('removeColor');
+    styles.removeHoverColor = getValue('removeHoverColor');
+    styles.checkoutBg = getValue('checkoutBg');
+    styles.checkoutColor = getValue('checkoutColor');
+  }
   return {
     openOnAdd: getValue('openOnAdd'),
     closeOnOverlayClick: getValue('closeOnOverlayClick'),
@@ -660,25 +696,10 @@ function collectConfig() {
     checkoutLabel: getValue('checkoutLabel'),
     continueLabel: getValue('continueLabel'),
     showContinueWithItems: getValue('showContinueWithItems'),
+    useCustomColors: custom,
     drawerWidth: getValue('drawerWidth'),
     animDuration: getValue('animDuration'),
-    styles: {
-      drawerBg: getValue('drawerBg'),
-      overlayColor: getValue('overlayColor'),
-      headerBg: getValue('headerBg'),
-      headerBorderColor: getValue('headerBorderColor'),
-      titleColor: getValue('titleColor'),
-      itemNameColor: getValue('itemNameColor'),
-      itemVariantColor: getValue('itemVariantColor'),
-      removeColor: getValue('removeColor'),
-      removeHoverColor: getValue('removeHoverColor'),
-      checkoutBg: getValue('checkoutBg'),
-      checkoutColor: getValue('checkoutColor'),
-      checkoutBorderRadius: getValue('checkoutBorderRadius'),
-      checkoutFontSize: getValue('checkoutFontSize'),
-      borderRadius: getValue('borderRadius'),
-      imageRadius: getValue('imageRadius')
-    }
+    styles: styles
   };
 }
 
@@ -700,58 +721,55 @@ function diffObj(obj, defaults) {
 function updatePreview() {
   var cfg = collectConfig();
   var s = cfg.styles;
+  var custom = cfg.useCustomColors;
 
-  // Drawer width & animation
+  // Show / hide the colour inputs based on the toggle.
+  var cs = document.getElementById('colorSettings');
+  if (cs) cs.style.display = custom ? '' : 'none';
+  document.querySelectorAll('.sdl-color-only').forEach(function(el) { el.style.display = custom ? '' : 'none'; });
+
+  // Colour helper: use the custom value when set, else fall back to the
+  // default (which stands in for the auto cart-page colour in the preview).
+  function col(key) { return (custom && s[key]) ? s[key] : DEFAULTS.styles[key]; }
+
   var drawer = document.getElementById('pvDrawer');
   var overlay = document.getElementById('pvOverlay');
   drawer.style.width = cfg.drawerWidth || '420px';
   drawer.style.transition = 'transform ' + (cfg.animDuration || 320) + 'ms cubic-bezier(0.4, 0, 0.2, 1)';
-  drawer.style.background = s.drawerBg;
+  drawer.style.background = col('drawerBg');
   drawer.style.borderRadius = (s.borderRadius !== '0px' ? s.borderRadius : '0') + ' 0 0 ' + (s.borderRadius !== '0px' ? s.borderRadius : '0');
 
-  // Overlay
-  if (overlay.classList.contains('pv-active')) {
-    overlay.style.background = s.overlayColor;
-  }
-  overlay.dataset.overlayColor = s.overlayColor;
+  if (overlay.classList.contains('pv-active')) overlay.style.background = col('overlayColor');
+  overlay.dataset.overlayColor = col('overlayColor');
 
-  // Header
   var header = document.getElementById('pvHeader');
-  header.style.background = s.headerBg;
-  header.style.borderBottomColor = s.headerBorderColor;
+  header.style.background = col('headerBg');
+  header.style.borderBottomColor = col('headerBorderColor');
 
-  // Title
   var title = document.getElementById('pvTitle');
   title.textContent = cfg.cartTitle || 'Your Cart';
-  title.style.color = s.titleColor;
+  title.style.color = col('titleColor');
 
-  // Footer
   var footer = document.getElementById('pvFooter');
-  footer.style.background = s.subtotalBg || s.headerBg;
-  footer.style.borderTopColor = s.subtotalBorderColor || s.headerBorderColor;
+  footer.style.background = col('subtotalBg') || col('headerBg');
+  footer.style.borderTopColor = col('subtotalBorderColor') || col('headerBorderColor');
 
-  // Checkout btn
   var checkoutBtn = document.getElementById('pvCheckout');
   checkoutBtn.textContent = cfg.checkoutLabel || 'Checkout';
-  checkoutBtn.style.background = s.checkoutBg;
-  checkoutBtn.style.color = s.checkoutColor;
+  checkoutBtn.style.background = col('checkoutBg');
+  checkoutBtn.style.color = col('checkoutColor');
   checkoutBtn.style.borderRadius = s.checkoutBorderRadius;
   checkoutBtn.style.fontSize = s.checkoutFontSize;
 
-  // Continue Shopping (in-footer only when the toggle is on; preview shows a filled cart)
   var viewCartBtn = document.getElementById('pvViewCart');
   viewCartBtn.textContent = cfg.continueLabel || 'Continue Shopping';
   viewCartBtn.style.display = cfg.showContinueWithItems ? '' : 'none';
 
-  // Image radius
-  document.querySelectorAll('.pv-item-img').forEach(function(img) {
-    img.style.borderRadius = s.imageRadius;
-  });
-
-  // Item names / prices
-  document.querySelectorAll('.pv-item-name').forEach(function(n) { n.style.color = s.itemNameColor; });
-  document.querySelectorAll('.pv-item-variant').forEach(function(v) { v.style.color = s.itemVariantColor; });
-  document.querySelectorAll('.pv-remove').forEach(function(r) { r.style.color = s.removeColor; });
+  document.querySelectorAll('.pv-item-img').forEach(function(img) { img.style.borderRadius = s.imageRadius; });
+  document.querySelectorAll('.pv-item-name').forEach(function(n) { n.style.color = col('itemNameColor'); });
+  // Variant = name colour at 0.6 opacity, mirroring the cart page.
+  document.querySelectorAll('.pv-item-variant').forEach(function(v) { v.style.color = col('itemNameColor'); v.style.opacity = '0.6'; });
+  document.querySelectorAll('.pv-remove').forEach(function(r) { r.style.color = col('itemNameColor'); r.style.opacity = '0.55'; });
 
   updateCode(cfg);
 }
