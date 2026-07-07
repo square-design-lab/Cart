@@ -2,56 +2,111 @@
    SDL Slide Cart — slideCart.css
    A slide-out (drawer) shopping cart for Squarespace 7.1 commerce.
 
-   Everything visual is driven by CSS custom properties (the --sdl-sc-*
-   variables below). The plugin sets these from window.sdlSlideCartSettings,
-   but you can freely override any of them — or target the .sdl-sc__*
-   classes directly — from Squarespace › Design › Custom CSS.
+   TYPOGRAPHY & BUTTONS follow the native /cart page automatically:
+   on load the plugin reads the real cart page's computed styles (title,
+   product name, price, variant, subtotal, checkout & continue-shopping
+   buttons) and feeds them into the --sdl-sc-* variables below. The
+   values here are only fallbacks used until that sync completes.
 
-   Example override in Custom CSS:
-     .sdl-sc { --sdl-sc-width: 480px; }
-     .sdl-sc__item-name { font-weight: 700; }
+   You can still override anything — or target the .sdl-sc__* classes —
+   from Squarespace › Design › Custom CSS, and any value set through
+   window.sdlSlideCartSettings wins over the auto-synced one.
    ===================================================================== */
 
 .sdl-sc-root {
-  /* ---- Defaults (overridable) ------------------------------------- */
+  /* ---- Drawer chrome (not cart-page-derived) ---------------------- */
   --sdl-sc-width: 420px;
   --sdl-sc-anim: 320ms;
   --sdl-sc-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
   --sdl-sc-drawer-bg: #ffffff;
   --sdl-sc-overlay: rgba(0, 0, 0, 0.4);
-  --sdl-sc-border-radius: 0px;      /* top-left / bottom-left corners  */
+  --sdl-sc-border-radius: 0px;
 
-  --sdl-sc-header-bg: #f8f8f8;
+  --sdl-sc-header-bg: #ffffff;
   --sdl-sc-header-border: #e5e5e5;
-  --sdl-sc-title-color: #1a1a1a;
-  --sdl-sc-title-size: 18px;
 
-  --sdl-sc-close-color: #888888;
-  --sdl-sc-close-size: 22px;
+  --sdl-sc-close-color: #555555;
+  --sdl-sc-close-size: 20px;
 
-  --sdl-sc-item-border: #f0f0f0;
+  --sdl-sc-item-border: #ececec;
   --sdl-sc-image-radius: 4px;
-  --sdl-sc-item-name-color: #1a1a1a;
-  --sdl-sc-item-variant-color: #888888;
-  --sdl-sc-price-color: #1a1a1a;
 
-  --sdl-sc-qty-border: #e5e5e5;
-  --sdl-sc-qty-btn-bg: #f0f0f0;
+  --sdl-sc-qty-border: #e0e0e0;
+  --sdl-sc-qty-btn-bg: #f4f4f4;
   --sdl-sc-qty-btn-color: #1a1a1a;
 
   --sdl-sc-remove-color: #aaaaaa;
   --sdl-sc-remove-hover: #e53e3e;
 
-  --sdl-sc-subtotal-bg: #f8f8f8;
+  --sdl-sc-subtotal-bg: transparent;
   --sdl-sc-subtotal-border: #e5e5e5;
-  --sdl-sc-subtotal-color: #1a1a1a;
 
+  /* ---- Cart-page-derived typography (fallbacks) ------------------- */
+  --sdl-sc-title-font: inherit;
+  --sdl-sc-title-size: 20px;
+  --sdl-sc-title-weight: 600;
+  --sdl-sc-title-ls: normal;
+  --sdl-sc-title-tt: none;
+  --sdl-sc-title-color: #1a1a1a;
+  --sdl-sc-title-lh: 1.2;
+
+  --sdl-sc-name-font: inherit;
+  --sdl-sc-name-size: 15px;
+  --sdl-sc-name-weight: 500;
+  --sdl-sc-name-ls: normal;
+  --sdl-sc-name-tt: none;
+  --sdl-sc-name-color: #1a1a1a;
+  --sdl-sc-name-lh: 1.4;
+
+  --sdl-sc-price-font: inherit;
+  --sdl-sc-price-size: 15px;
+  --sdl-sc-price-weight: 400;
+  --sdl-sc-price-ls: normal;
+  --sdl-sc-price-color: #1a1a1a;
+  --sdl-sc-price-lh: 1.4;
+
+  --sdl-sc-variant-font: inherit;
+  --sdl-sc-variant-size: 13px;
+  --sdl-sc-variant-weight: 400;
+  --sdl-sc-variant-ls: normal;
+  --sdl-sc-variant-color: #888888;
+  --sdl-sc-variant-lh: 1.5;
+
+  --sdl-sc-sublabel-font: inherit;
+  --sdl-sc-sublabel-size: 15px;
+  --sdl-sc-sublabel-weight: 500;
+  --sdl-sc-sublabel-ls: normal;
+  --sdl-sc-sublabel-color: #1a1a1a;
+
+  --sdl-sc-subprice-font: inherit;
+  --sdl-sc-subprice-size: 20px;
+  --sdl-sc-subprice-weight: 600;
+  --sdl-sc-subprice-ls: normal;
+  --sdl-sc-subprice-color: #1a1a1a;
+
+  /* ---- Cart-page-derived buttons (fallbacks) ---------------------- */
   --sdl-sc-checkout-bg: #1a1a1a;
   --sdl-sc-checkout-color: #ffffff;
   --sdl-sc-checkout-radius: 4px;
-  --sdl-sc-checkout-font-size: 14px;
-  --sdl-sc-view-cart-color: #555555;
+  --sdl-sc-checkout-padding: 14px 22px;
+  --sdl-sc-checkout-border: 0 none transparent;
+  --sdl-sc-checkout-font: inherit;
+  --sdl-sc-checkout-size: 15px;
+  --sdl-sc-checkout-weight: 600;
+  --sdl-sc-checkout-ls: normal;
+  --sdl-sc-checkout-tt: none;
+
+  --sdl-sc-continue-bg: transparent;
+  --sdl-sc-continue-color: #1a1a1a;
+  --sdl-sc-continue-radius: 4px;
+  --sdl-sc-continue-padding: 12px 22px;
+  --sdl-sc-continue-border: 1px solid currentColor;
+  --sdl-sc-continue-font: inherit;
+  --sdl-sc-continue-size: 14px;
+  --sdl-sc-continue-weight: 500;
+  --sdl-sc-continue-ls: normal;
+  --sdl-sc-continue-tt: none;
 
   --sdl-sc-empty-color: #888888;
 }
@@ -60,7 +115,7 @@
 .sdl-sc-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2147483000;      /* above Squarespace announcement bars etc. */
+  z-index: 2147483000;
   background: transparent;
   visibility: hidden;
   pointer-events: none;
@@ -92,7 +147,6 @@
   transform: translateX(100%);
   transition: transform var(--sdl-sc-anim) var(--sdl-sc-ease);
   font-family: inherit;
-  color: var(--sdl-sc-item-name-color);
   box-sizing: border-box;
 }
 .sdl-sc-overlay.is-open .sdl-sc { transform: translateX(0); }
@@ -104,17 +158,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
+  padding: 20px 22px;
   background: var(--sdl-sc-header-bg);
   border-bottom: 1px solid var(--sdl-sc-header-border);
 }
 .sdl-sc__title {
-  font-size: var(--sdl-sc-title-size);
-  font-weight: 600;
-  color: var(--sdl-sc-title-color);
   margin: 0;
+  font-family: var(--sdl-sc-title-font);
+  font-size: var(--sdl-sc-title-size);
+  font-weight: var(--sdl-sc-title-weight);
+  letter-spacing: var(--sdl-sc-title-ls);
+  text-transform: var(--sdl-sc-title-tt);
+  color: var(--sdl-sc-title-color);
+  line-height: var(--sdl-sc-title-lh);
 }
-.sdl-sc__title .sdl-sc__count { opacity: 0.55; font-weight: 500; }
+.sdl-sc__title .sdl-sc__count { opacity: 0.5; font-weight: inherit; }
 .sdl-sc__close {
   appearance: none;
   background: none;
@@ -127,7 +185,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s;
 }
 .sdl-sc__close svg { width: var(--sdl-sc-close-size); height: var(--sdl-sc-close-size); display: block; }
 .sdl-sc__close:hover { background: rgba(0, 0, 0, 0.06); }
@@ -140,15 +198,15 @@
 }
 .sdl-sc__item {
   display: flex;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 16px;
+  padding: 18px 22px;
   border-bottom: 1px solid var(--sdl-sc-item-border);
 }
 .sdl-sc__item.is-pending { opacity: 0.5; pointer-events: none; }
 .sdl-sc__item-img-link { flex-shrink: 0; display: block; line-height: 0; }
 .sdl-sc__item-img {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
   object-fit: cover;
   background: #eee;
   border-radius: var(--sdl-sc-image-radius);
@@ -159,33 +217,41 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 .sdl-sc__item-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--sdl-sc-item-name-color);
+  font-family: var(--sdl-sc-name-font);
+  font-size: var(--sdl-sc-name-size);
+  font-weight: var(--sdl-sc-name-weight);
+  letter-spacing: var(--sdl-sc-name-ls);
+  text-transform: var(--sdl-sc-name-tt);
+  color: var(--sdl-sc-name-color);
+  line-height: var(--sdl-sc-name-lh);
   text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .sdl-sc__item-name:hover { text-decoration: underline; }
+.sdl-sc__item-variants { margin-top: 3px; }
 .sdl-sc__item-variant {
-  font-size: 12px;
-  color: var(--sdl-sc-item-variant-color);
+  margin: 0;
+  font-family: var(--sdl-sc-variant-font);
+  font-size: var(--sdl-sc-variant-size);
+  font-weight: var(--sdl-sc-variant-weight);
+  letter-spacing: var(--sdl-sc-variant-ls);
+  color: var(--sdl-sc-variant-color);
+  line-height: var(--sdl-sc-variant-lh);
 }
 .sdl-sc__price-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 6px;
+  gap: 12px;
+  margin-top: 12px;
 }
 .sdl-sc__price {
-  font-size: 13px;
-  font-weight: 500;
+  font-family: var(--sdl-sc-price-font);
+  font-size: var(--sdl-sc-price-size);
+  font-weight: var(--sdl-sc-price-weight);
+  letter-spacing: var(--sdl-sc-price-ls);
   color: var(--sdl-sc-price-color);
+  line-height: var(--sdl-sc-price-lh);
 }
 
 /* Quantity stepper */
@@ -198,13 +264,13 @@
 }
 .sdl-sc__qty-btn {
   appearance: none;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: none;
   cursor: pointer;
   background: var(--sdl-sc-qty-btn-bg);
   color: var(--sdl-sc-qty-btn-color);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -214,12 +280,12 @@
 .sdl-sc__qty-btn:hover { filter: brightness(0.94); }
 .sdl-sc__qty-btn:disabled { opacity: 0.4; cursor: default; }
 .sdl-sc__qty-val {
-  min-width: 30px;
+  min-width: 32px;
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   padding: 0 4px;
-  color: var(--sdl-sc-item-name-color);
+  color: var(--sdl-sc-name-color);
 }
 .sdl-sc__remove {
   appearance: none;
@@ -236,18 +302,62 @@
 }
 .sdl-sc__remove:hover { color: var(--sdl-sc-remove-hover); }
 
+/* ---- Shared button look (checkout + continue) --------------------- */
+.sdl-sc__btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s, filter 0.15s;
+}
+.sdl-sc__btn:hover { opacity: 0.88; }
+.sdl-sc__checkout {
+  background: var(--sdl-sc-checkout-bg);
+  color: var(--sdl-sc-checkout-color);
+  border-radius: var(--sdl-sc-checkout-radius);
+  padding: var(--sdl-sc-checkout-padding);
+  border: var(--sdl-sc-checkout-border);
+  font-family: var(--sdl-sc-checkout-font);
+  font-size: var(--sdl-sc-checkout-size);
+  font-weight: var(--sdl-sc-checkout-weight);
+  letter-spacing: var(--sdl-sc-checkout-ls);
+  text-transform: var(--sdl-sc-checkout-tt);
+}
+.sdl-sc__continue {
+  background: var(--sdl-sc-continue-bg);
+  color: var(--sdl-sc-continue-color);
+  border-radius: var(--sdl-sc-continue-radius);
+  padding: var(--sdl-sc-continue-padding);
+  border: var(--sdl-sc-continue-border);
+  font-family: var(--sdl-sc-continue-font);
+  font-size: var(--sdl-sc-continue-size);
+  font-weight: var(--sdl-sc-continue-weight);
+  letter-spacing: var(--sdl-sc-continue-ls);
+  text-transform: var(--sdl-sc-continue-tt);
+}
+
 /* ---- Empty state --------------------------------------------------- */
 .sdl-sc__empty {
-  padding: 48px 24px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 40px 24px;
   text-align: center;
-  color: var(--sdl-sc-empty-color);
-  font-size: 14px;
 }
+.sdl-sc__empty-msg {
+  color: var(--sdl-sc-empty-color);
+  font-size: 15px;
+}
+.sdl-sc__empty .sdl-sc__continue { width: auto; }
 
 /* ---- Footer -------------------------------------------------------- */
 .sdl-sc__footer {
   flex-shrink: 0;
-  padding: 16px 20px 20px;
+  padding: 18px 22px 22px;
   background: var(--sdl-sc-subtotal-bg);
   border-top: 1px solid var(--sdl-sc-subtotal-border);
 }
@@ -256,41 +366,23 @@
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
-.sdl-sc__subtotal-label { font-size: 14px; color: var(--sdl-sc-item-variant-color); }
+.sdl-sc__subtotal-label {
+  font-family: var(--sdl-sc-sublabel-font);
+  font-size: var(--sdl-sc-sublabel-size);
+  font-weight: var(--sdl-sc-sublabel-weight);
+  letter-spacing: var(--sdl-sc-sublabel-ls);
+  color: var(--sdl-sc-sublabel-color);
+}
 .sdl-sc__subtotal {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--sdl-sc-subtotal-color);
+  font-family: var(--sdl-sc-subprice-font);
+  font-size: var(--sdl-sc-subprice-size);
+  font-weight: var(--sdl-sc-subprice-weight);
+  letter-spacing: var(--sdl-sc-subprice-ls);
+  color: var(--sdl-sc-subprice-color);
 }
-.sdl-sc__btns { display: flex; flex-direction: column; gap: 10px; }
-.sdl-sc__checkout {
-  display: block;
-  text-align: center;
-  padding: 13px 20px;
-  font-size: var(--sdl-sc-checkout-font-size);
-  font-weight: 600;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  background: var(--sdl-sc-checkout-bg);
-  color: var(--sdl-sc-checkout-color);
-  border-radius: var(--sdl-sc-checkout-radius);
-  transition: opacity 0.15s;
-  font-family: inherit;
-}
-.sdl-sc__checkout:hover { opacity: 0.85; }
-.sdl-sc__checkout:disabled { opacity: 0.5; cursor: default; }
-.sdl-sc__view-cart {
-  display: block;
-  text-align: center;
-  padding: 8px 20px;
-  font-size: 13px;
-  text-decoration: none;
-  color: var(--sdl-sc-view-cart-color);
-}
-.sdl-sc__view-cart:hover { text-decoration: underline; }
+.sdl-sc__btns { display: flex; flex-direction: column; gap: 12px; }
 
 /* ---- Loading spinner ---------------------------------------------- */
 .sdl-sc__loading {
@@ -312,8 +404,6 @@
 @media (max-width: 480px) {
   .sdl-sc { --sdl-sc-width: 100vw; --sdl-sc-border-radius: 0px; }
 }
-
-/* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .sdl-sc, .sdl-sc-overlay { transition-duration: 0.01ms !important; }
   .sdl-sc__spinner { animation: none; }
