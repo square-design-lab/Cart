@@ -248,16 +248,33 @@
             var e = d.querySelector(sel); if (!e) return null; var c = w.getComputedStyle(e);
             return { font: c.fontFamily, size: c.fontSize, weight: c.fontWeight, ls: c.letterSpacing, tt: c.textTransform, color: c.color, lh: c.lineHeight };
           }
-          function btn(cls) {
-            var a = d.createElement('a'); a.className = cls; a.textContent = 'x'; a.style.display = 'inline-block';
-            d.body.appendChild(a); var c = w.getComputedStyle(a);
-            var o = {
+          // Read a REAL cart button so we inherit its full look (border,
+          // padding, font) — not just the bare theme colours a synthetic
+          // element would give.
+          function readBtn(sel) {
+            var e = d.querySelector(sel); if (!e) return null; var c = w.getComputedStyle(e);
+            return {
               bg: c.backgroundColor, color: c.color, radius: c.borderRadius, padding: c.padding,
-              border: c.borderWidth + ' ' + c.borderStyle + ' ' + c.borderColor,
+              border: c.borderTopWidth + ' ' + c.borderTopStyle + ' ' + c.borderTopColor,
               font: c.fontFamily, size: c.fontSize, weight: c.fontWeight, ls: c.letterSpacing, tt: c.textTransform
             };
-            a.remove(); return o;
           }
+          // Checkout (primary) and Continue (secondary) never appear on the
+          // cart page at the same time, so read whichever is present and
+          // derive its counterpart from the theme's accent colour.
+          function deriveSecondary(p) {
+            return { bg: 'transparent', color: p.bg, radius: p.radius, padding: p.padding,
+              border: '1px solid ' + p.bg, font: p.font, size: p.size, weight: p.weight, ls: p.ls, tt: p.tt };
+          }
+          function derivePrimary(s) {
+            return { bg: s.color, color: '#ffffff', radius: s.radius, padding: s.padding,
+              border: '0 none transparent', font: s.font, size: s.size, weight: s.weight, ls: s.ls, tt: s.tt };
+          }
+          var primary = readBtn('.cart-checkout-button, .sqs-button-element--primary');
+          var secondary = readBtn('.cart-continue-button');
+          if (primary && !secondary) secondary = deriveSecondary(primary);
+          if (secondary && !primary) primary = derivePrimary(secondary);
+
           // Merge — keep previously captured tokens if this load lacks them.
           theme.title    = typo('.cart-title')          || theme.title;
           theme.name     = typo('.cart-row-title')      || theme.name;
@@ -265,8 +282,8 @@
           theme.variant  = typo('.cart-row-variant')    || theme.variant;
           theme.sublabel = typo('.cart-subtotal-label') || theme.sublabel;
           theme.subprice = typo('.cart-subtotal-price') || theme.subprice;
-          theme.checkout = btn('sqs-editable-button sqs-button-element--primary') || theme.checkout;
-          theme.continue = btn('sqs-editable-button sqs-button-element--secondary') || theme.continue;
+          theme.checkout = primary   || theme.checkout;
+          theme.continue = secondary || theme.continue;
           try {
             var s = d.querySelector('#sqs-cart-root script');
             if (s) { var j = JSON.parse(s.textContent); if (j && j.continueShoppingLinkUrl) continueUrl = j.continueShoppingLinkUrl; }
