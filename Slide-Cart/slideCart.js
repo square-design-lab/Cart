@@ -175,7 +175,7 @@
   // Has enough been captured that another iframe load is pointless?
   function themeComplete() {
     return theme.title && theme.name && theme.price && theme.variant &&
-           theme.sublabel && theme.subprice && theme.checkout && theme.continue;
+           theme.sublabel && theme.subprice && theme.checkout && theme.continue && theme.bg;
   }
 
   // Map a captured token object -> its CSS vars, skipping user-set ones.
@@ -189,6 +189,10 @@
   function applyTheme() {
     if (!CFG.followCartStyles || !els.root) return;
     var r = els.root, t = theme;
+    // Match the cart page's background across the whole drawer surface.
+    if (t.bg) setVars(r, {
+      '--sdl-sc-drawer-bg': t.bg, '--sdl-sc-header-bg': t.bg, '--sdl-sc-subtotal-bg': t.bg
+    });
     if (t.title) setVars(r, {
       '--sdl-sc-title-font': t.title.font, '--sdl-sc-title-size': t.title.size, '--sdl-sc-title-weight': t.title.weight,
       '--sdl-sc-title-ls': t.title.ls, '--sdl-sc-title-tt': t.title.tt, '--sdl-sc-title-color': t.title.color, '--sdl-sc-title-lh': t.title.lh
@@ -278,6 +282,16 @@
           if (primary && !secondary) secondary = deriveSecondary(primary);
           if (secondary && !primary) primary = derivePrimary(secondary);
 
+          // Effective page background behind the cart: walk up from the cart
+          // container to the first ancestor with a non-transparent colour.
+          function isTransparent(c) { return !c || c === 'transparent' || /,\s*0\)\s*$/.test(c); }
+          function effectiveBg(sel) {
+            var el = d.querySelector(sel);
+            while (el) { var c = w.getComputedStyle(el).backgroundColor; if (!isTransparent(c)) return c; el = el.parentElement; }
+            return null;
+          }
+          var pageBg = effectiveBg('#sqs-cart-container') || effectiveBg('#sqs-cart-root') || effectiveBg('body');
+
           // Merge — keep previously captured tokens if this load lacks them.
           theme.title    = typo('.cart-title')          || theme.title;
           theme.name     = typo('.cart-row-title')      || theme.name;
@@ -287,6 +301,7 @@
           theme.subprice = typo('.cart-subtotal-price') || theme.subprice;
           theme.checkout = primary   || theme.checkout;
           theme.continue = secondary || theme.continue;
+          theme.bg       = pageBg    || theme.bg;
           try {
             var s = d.querySelector('#sqs-cart-root script');
             if (s) { var j = JSON.parse(s.textContent); if (j && j.continueShoppingLinkUrl) continueUrl = j.continueShoppingLinkUrl; }
