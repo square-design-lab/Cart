@@ -293,7 +293,7 @@
           } catch (e) {}
           saveCache();
           applyTheme();
-          if (els.root && state.open) render();
+          if (els.root && state.open && state.cart && state.cart.items && state.cart.items.length) render();
         } catch (e) {}
         finish();
       }, 1200);
@@ -439,12 +439,21 @@
   }
 
   /* ---- 7. Open / close --------------------------------------------- */
-  function open() {
+  function open(prefetchedCart) {
     if (!els.root) buildShell();
     state.open = true;
     els.overlay.classList.add('is-open');
     els.overlay.setAttribute('aria-hidden', 'false');
     document.documentElement.style.overflow = 'hidden';
+    // Paint the correct contents immediately so the drawer never flashes the
+    // stale "empty cart" state on the way in.
+    if (prefetchedCart) {
+      state.cart = prefetchedCart;
+      render();
+      syncNativeBadge(prefetchedCart);
+    } else if (!state.cart || !state.cart.items || !state.cart.items.length) {
+      renderLoading();
+    }
     syncCartStyles();      // capture row/button styles now that cart likely has items
     refresh();
   }
@@ -552,6 +561,40 @@
     setTimeout(function () { writingBadge = false; }, 0);
   }
   function onItemAdded() { if (CFG.openOnAdd) open(); else refresh(); }
+
+  function cartQty(c) { return ((c && c.items) || []).reduce(function (s, it) { return s + (it.quantity || 0); }, 0); }
+
+  // Primary add detection: when the shopper clicks a native Add-to-Cart button,
+  // poll the cart API until the item count rises, then open + render with the
+  // fresh cart. This is authoritative and works even when Squarespace's own
+  // header badge is out of sync (e.g. after an item was removed through the
+  // drawer, Squarespace stops updating its badge) — a case the badge
+  // MutationObserver below cannot detect.
+  var ADD_BTN_SEL = '.sqs-add-to-cart-button, .sqs-add-to-cart-button-inner, ' +
+    '.sqs-add-to-cart-button-wrapper, [data-test="product-add-to-cart"], .product-adds-to-cart button';
+  var polling = false;
+  function pollForAdd(baseline) {
+    if (polling) return;
+    polling = true;
+    var tries = 0;
+    (function step() {
+      if (++tries > 16) { polling = false; return; }        // give up after ~5.6s
+      setTimeout(function () {
+        API.fetchCart().then(function (cart) {
+          if (cartQty(cart) > baseline) {
+            polling = false;
+            lastCount = cartQty(cart);                        // keep the observer from re-firing
+            if (CFG.openOnAdd) open(cart);
+            else { state.cart = cart; if (els.root) render(); syncNativeBadge(cart); }
+          } else { step(); }
+        }).catch(function () { step(); });
+      }, 350);
+    })();
+  }
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest(ADD_BTN_SEL)) return;
+    pollForAdd(cartQty(state.cart));   // baseline captured before the add commits
+  }, true);
 
   // The drawer must only auto-open for a *genuine* add. On page load
   // Squarespace hydrates its header cart badge (absent/0 -> N), which would
