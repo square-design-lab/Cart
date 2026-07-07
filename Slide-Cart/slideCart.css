@@ -402,7 +402,7 @@
 
 /* ---- Responsive ---------------------------------------------------- */
 @media (max-width: 480px) {
-  .sdl-sc { --sdl-sc-width: 100vw; --sdl-sc-border-radius: 0px; }
+  .sdl-sc { --sdl-sc-width: 100%; max-width: 100%; --sdl-sc-border-radius: 0px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sdl-sc, .sdl-sc-overlay { transition-duration: 0.01ms !important; }
