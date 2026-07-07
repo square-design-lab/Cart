@@ -399,8 +399,8 @@ pre {
           <input type="text" id="checkoutLabel" value="Checkout" />
         </div>
         <div class="field">
-          <label>View Cart Link</label>
-          <input type="text" id="viewCartLabel" value="View Full Cart" />
+          <label>Continue Shopping</label>
+          <input type="text" id="continueLabel" value="Continue Shopping" />
         </div>
       </div>
     </div>
@@ -482,10 +482,7 @@ pre {
           <input type="text" id="checkoutFontSize" value="14px" />
         </div>
       </div>
-      <div class="field">
-        <label>View Cart Link Color</label>
-        <input type="color" id="viewCartColor" value="#555555" />
-      </div>
+      <div class="hint" style="margin-top:2px">Checkout &amp; Continue Shopping buttons and all text automatically match your <b>/cart</b> page. Colors above are optional overrides.</div>
     </div>
 
   </div><!-- /sidebar-content -->
@@ -584,7 +581,7 @@ pre {
         </div>
         <div class="pv-btns">
           <a href="#" class="pv-checkout" id="pvCheckout" onclick="return false;">Checkout</a>
-          <a href="#" class="pv-view-cart" id="pvViewCart" onclick="return false;">View Full Cart</a>
+          <a href="#" class="pv-view-cart" id="pvViewCart" onclick="return false;">Continue Shopping</a>
         </div>
       </div>
     </div>
@@ -601,7 +598,7 @@ var DEFAULTS = {
   cartTitle: 'Your Cart',
   emptyMessage: 'Your cart is empty.',
   checkoutLabel: 'Checkout',
-  viewCartLabel: 'View Full Cart',
+  continueLabel: 'Continue Shopping',
   drawerWidth: '420px',
   animDuration: 320,
   styles: {
@@ -621,7 +618,6 @@ var DEFAULTS = {
     checkoutColor: '#ffffff',
     checkoutBorderRadius: '4px',
     checkoutFontSize: '14px',
-    viewCartColor: '#555555',
     removeColor: '#aaaaaa',
     removeHoverColor: '#e53e3e',
     qtyBtnBg: '#f0f0f0',
@@ -650,7 +646,7 @@ function collectConfig() {
     cartTitle: getValue('cartTitle'),
     emptyMessage: getValue('emptyMessage'),
     checkoutLabel: getValue('checkoutLabel'),
-    viewCartLabel: getValue('viewCartLabel'),
+    continueLabel: getValue('continueLabel'),
     drawerWidth: getValue('drawerWidth'),
     animDuration: getValue('animDuration'),
     styles: {
@@ -667,7 +663,6 @@ function collectConfig() {
       checkoutColor: getValue('checkoutColor'),
       checkoutBorderRadius: getValue('checkoutBorderRadius'),
       checkoutFontSize: getValue('checkoutFontSize'),
-      viewCartColor: getValue('viewCartColor'),
       borderRadius: getValue('borderRadius'),
       imageRadius: getValue('imageRadius')
     }
@@ -730,10 +725,9 @@ function updatePreview() {
   checkoutBtn.style.borderRadius = s.checkoutBorderRadius;
   checkoutBtn.style.fontSize = s.checkoutFontSize;
 
-  // View Cart
+  // Continue Shopping
   var viewCartBtn = document.getElementById('pvViewCart');
-  viewCartBtn.textContent = cfg.viewCartLabel || 'View Full Cart';
-  viewCartBtn.style.color = s.viewCartColor;
+  viewCartBtn.textContent = cfg.continueLabel || 'Continue Shopping';
 
   // Image radius
   document.querySelectorAll('.pv-item-img').forEach(function(img) {

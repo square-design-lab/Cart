@@ -5,7 +5,13 @@ A slide-out (drawer) shopping cart for **Squarespace 7.1** commerce sites.
 - Auto-opens and updates **in real time** when a product is added to the cart — no page reload.
 - Lets shoppers **change quantity** or **remove items** from inside the drawer.
 - Mirrors the content of the native `/cart` page (product name, image, variant, price, subtotal).
-- Fully themable via CSS custom properties or the `.sdl-sc__*` classes.
+- **Inherits the `/cart` page's styling automatically** — title, product/price/variant/subtotal
+  typography and the Checkout (primary) & Continue Shopping (secondary) buttons are read from
+  the live cart page, so the drawer matches whatever theme the site uses. Set anything in
+  `window.sdlSlideCartSettings` to override.
+- Variant options are listed one per line (`Size: Small` / `Color: Orange`), like the cart page.
+- Shows a **Continue Shopping** button (footer and empty state) linked to the site's own
+  continue-shopping URL.
 - Keeps Squarespace's own header cart count in sync after in-drawer edits.
 
 ## Files
