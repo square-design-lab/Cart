@@ -26,6 +26,9 @@
     emptyMessage: 'Your cart is empty.',
     checkoutLabel: 'Checkout',
     continueLabel: 'Continue Shopping',
+    showContinueWithItems: false, // show the Continue Shopping button in the
+                                  // footer when the cart has items (it is
+                                  // always shown in the empty state)
     drawerWidth: '420px',
     animDuration: 320,
     showItemCount: true,
@@ -329,7 +332,9 @@
           '</div>' +
           '<div class="sdl-sc__btns">' +
             '<a class="sdl-sc__btn sdl-sc__checkout" href="/checkout">' + esc(CFG.checkoutLabel) + '</a>' +
-            '<a class="sdl-sc__btn sdl-sc__continue" href="' + esc(continueUrl) + '">' + esc(CFG.continueLabel) + '</a>' +
+            (CFG.showContinueWithItems
+              ? '<a class="sdl-sc__btn sdl-sc__continue" href="' + esc(continueUrl) + '">' + esc(CFG.continueLabel) + '</a>'
+              : '') +
           '</div>' +
         '</footer>' +
       '</aside>';
@@ -419,7 +424,8 @@
     els.body.innerHTML = html;
     els.subtotal.textContent = money(cart.subtotal || cart.grandTotal);
     els.footer.classList.remove('is-hidden');
-    els.footer.querySelector('.sdl-sc__continue').setAttribute('href', continueUrl);
+    var footerCont = els.footer.querySelector('.sdl-sc__continue');
+    if (footerCont) footerCont.setAttribute('href', continueUrl);
 
     if (CFG.showItemCount) {
       var n = items.reduce(function (sum, it) { return sum + (it.quantity || 0); }, 0);
@@ -546,8 +552,23 @@
     setTimeout(function () { writingBadge = false; }, 0);
   }
   function onItemAdded() { if (CFG.openOnAdd) open(); else refresh(); }
+
+  // The drawer must only auto-open for a *genuine* add. On page load
+  // Squarespace hydrates its header cart badge (absent/0 -> N), which would
+  // otherwise look like an "add". So we don't arm auto-open until the true
+  // baseline count is known (from the cart API) and the page has settled.
+  var badgeReady = false;
   function watchBadge() {
     lastCount = readBadgeCount();
+    // Authoritative baseline: whatever is already in the cart is NOT an add.
+    API.fetchCart().then(function (cart) {
+      var total = ((cart && cart.items) || []).reduce(function (s, it) { return s + (it.quantity || 0); }, 0);
+      lastCount = total;
+      badgeReady = true;
+    }).catch(function () { badgeReady = true; });
+    // Safety net in case the fetch hangs.
+    setTimeout(function () { badgeReady = true; }, 2500);
+
     var scheduled = false;
     var obs = new MutationObserver(function () {
       if (writingBadge || scheduled) return;
@@ -557,8 +578,13 @@
         var now = readBadgeCount();
         if (now === null) return;
         if (lastCount === null) { lastCount = now; return; }
-        if (now > lastCount) { lastCount = now; onItemAdded(); }
-        else if (now !== lastCount) { lastCount = now; if (state.open) refresh(); }
+        if (now > lastCount) {
+          lastCount = now;
+          if (badgeReady) onItemAdded();   // real add only after baseline is set
+        } else if (now !== lastCount) {
+          lastCount = now;
+          if (state.open) refresh();
+        }
       }, 80);
     });
     obs.observe(document.body, { childList: true, characterData: true, subtree: true });

@@ -352,6 +352,17 @@ pre {
           <label for="closeOnEscape">Close on ESC key</label>
         </div>
       </div>
+      <div class="field">
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="showContinueWithItems">
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+          <label for="showContinueWithItems">Show "Continue Shopping" when cart has items</label>
+        </div>
+        <div class="hint">Always shown when the cart is empty.</div>
+      </div>
     </div>
 
     <!-- DRAWER -->
@@ -599,6 +610,7 @@ var DEFAULTS = {
   emptyMessage: 'Your cart is empty.',
   checkoutLabel: 'Checkout',
   continueLabel: 'Continue Shopping',
+  showContinueWithItems: false,
   drawerWidth: '420px',
   animDuration: 320,
   styles: {
@@ -647,6 +659,7 @@ function collectConfig() {
     emptyMessage: getValue('emptyMessage'),
     checkoutLabel: getValue('checkoutLabel'),
     continueLabel: getValue('continueLabel'),
+    showContinueWithItems: getValue('showContinueWithItems'),
     drawerWidth: getValue('drawerWidth'),
     animDuration: getValue('animDuration'),
     styles: {
@@ -725,9 +738,10 @@ function updatePreview() {
   checkoutBtn.style.borderRadius = s.checkoutBorderRadius;
   checkoutBtn.style.fontSize = s.checkoutFontSize;
 
-  // Continue Shopping
+  // Continue Shopping (in-footer only when the toggle is on; preview shows a filled cart)
   var viewCartBtn = document.getElementById('pvViewCart');
   viewCartBtn.textContent = cfg.continueLabel || 'Continue Shopping';
+  viewCartBtn.style.display = cfg.showContinueWithItems ? '' : 'none';
 
   // Image radius
   document.querySelectorAll('.pv-item-img').forEach(function(img) {
