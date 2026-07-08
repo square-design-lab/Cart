@@ -607,6 +607,24 @@
   }
   function syncNativeBadge(cart) { writeBadge(cartQty(cart)); }
 
+  // Hide the header count for a split second on load, then fade it in. This
+  // masks Squarespace's brief stale-hydration flash: the number simply isn't
+  // visible until it has settled to the authoritative value.
+  function fadeBadgeOnLoad() {
+    var revealed = false;
+    function apply(op) {
+      document.querySelectorAll(CART_QTY_SEL).forEach(function (el) {
+        if ((el.style.transition || '').indexOf('opacity') === -1) el.style.transition = 'opacity 0.35s ease';
+        el.style.opacity = op;
+      });
+    }
+    apply('0');
+    // Keep any badge that (re)appears during the window hidden too.
+    var obs = new MutationObserver(function () { if (!revealed) apply('0'); });
+    obs.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { revealed = true; obs.disconnect(); apply('1'); }, 500);
+  }
+
   // On reload, Squarespace re-hydrates its header count from its own cached
   // cart state, which can be momentarily stale (a wrong number that flashes
   // before settling) — most noticeably after the drawer edited the cart via
@@ -703,6 +721,7 @@
   };
 
   function init() {
+    fadeBadgeOnLoad();  // hide the header count until it settles, then fade in
     loadCache();
     buildShell();
     watchBadge();
