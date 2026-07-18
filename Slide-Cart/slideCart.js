@@ -26,9 +26,15 @@
     emptyMessage: 'Your cart is empty.',
     checkoutLabel: 'Checkout',
     continueLabel: 'Continue Shopping',
-    showContinueWithItems: false, // show the Continue Shopping button in the
-                                  // footer when the cart has items (it is
-                                  // always shown in the empty state)
+    viewCartLabel: 'View Cart',
+    // Footer button shown when the cart HAS items: 'none' | 'continue' | 'viewcart'.
+    // (The empty state always shows Continue Shopping.)
+    footerButton: 'none',
+    removeIcon: 'cross',          // cart-item remove icon: 'cross' | 'trash'
+    showTaxNote: true,            // small note above the checkout button
+    taxNote: 'Taxes, discounts and shipping calculated at checkout.',
+    stockMessage: '',             // custom out-of-stock text; {max} = qty available.
+                                  // empty -> use Squarespace's own message
     drawerWidth: '420px',
     animDuration: 320,
     showItemCount: true,
@@ -55,6 +61,8 @@
     return out;
   }
   var CFG = deepMerge(DEFAULTS, USER);
+  // Back-compat: the old boolean maps to the new footerButton choice.
+  if (USER.showContinueWithItems && (USER.footerButton === undefined)) CFG.footerButton = 'continue';
 
   // Config style key -> CSS custom property. These win over the cart sync.
   var STYLE_VARS = {
@@ -360,11 +368,10 @@
             '<span class="sdl-sc__subtotal-label">Subtotal</span>' +
             '<span class="sdl-sc__subtotal"></span>' +
           '</div>' +
+          (CFG.showTaxNote ? '<div class="sdl-sc__tax-note">' + esc(CFG.taxNote) + '</div>' : '') +
           '<div class="sdl-sc__btns">' +
             '<a class="sdl-sc__btn sdl-sc__checkout" href="/checkout">' + esc(CFG.checkoutLabel) + '</a>' +
-            (CFG.showContinueWithItems
-              ? '<a class="sdl-sc__btn sdl-sc__continue" href="' + esc(continueUrl) + '">' + esc(CFG.continueLabel) + '</a>'
-              : '') +
+            footerBtnHtml() +
           '</div>' +
         '</footer>' +
       '</aside>';
@@ -415,6 +422,28 @@
       '" href="' + esc(continueUrl) + '">' + esc(CFG.continueLabel) + '</a>';
   }
 
+  // The secondary footer button shown when the cart has items.
+  function footerBtnHtml() {
+    if (CFG.footerButton === 'continue') return continueBtnHtml();
+    if (CFG.footerButton === 'viewcart') {
+      return '<a class="sdl-sc__btn sdl-sc__viewcart" href="/cart">' + esc(CFG.viewCartLabel) + '</a>';
+    }
+    return '';
+  }
+
+  // Cart-item remove icon: default cross, or an animated trash can.
+  function removeIconHtml() {
+    if (CFG.removeIcon === 'trash') {
+      return '<svg class="sdl-sc__trash" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
+        '<path class="sdl-sc__ri-bottom" d="M11.5 9v4.25M8.5 9v4.25M5.75 12.2V6h8.5c0 2.421 0 3.779 0 6.2 0 .853 0 1.447-.038 1.91-.037.453-.106.714-.207.911a2.498 2.498 0 0 1-.983 1.017c-.197.1-.458.17-.911.207-.463.037-1.057.038-1.91.038h-.4c-.853 0-1.447 0-1.91-.038-.453-.037-.714-.106-.911-.207a2.498 2.498 0 0 1-.984-1.017c-.1-.197-.17-.458-.207-.911C5.75 13.647 5.75 13.053 5.75 12.2z" stroke="currentColor" stroke-width="var(--sdl-sc-icon-stroke)" stroke-linecap="round"></path>' +
+        '<path class="sdl-sc__ri-top" d="M4.25 6h11.5M8 5.25a2 2 0 1 1 4 0" stroke="currentColor" stroke-width="var(--sdl-sc-icon-stroke)" stroke-linecap="round" stroke-linejoin="round"></path>' +
+      '</svg>';
+    }
+    return '<svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true">' +
+      '<line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+      '<line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  }
+
   function render() {
     var cart = state.cart;
     var items = (cart && cart.items) || [];
@@ -455,10 +484,8 @@
                 '<span class="sdl-sc__qty-val">' + esc(item.quantity) + '</span>' +
                 '<button class="sdl-sc__qty-btn" type="button" data-act="inc" aria-label="Increase quantity">+</button>' +
               '</div>' +
-              '<button class="sdl-sc__remove" type="button" data-act="remove" aria-label="Remove item">' +
-                '<svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true">' +
-                '<line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
-                '<line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
+              '<button class="sdl-sc__remove sdl-sc__remove--' + esc(CFG.removeIcon) + '" type="button" data-act="remove" aria-label="Remove item">' +
+                removeIconHtml() +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -512,20 +539,11 @@
   function toggle() { state.open ? close() : open(); }
 
   /* ---- 8. Data refresh + mutations --------------------------------- */
-  /* Broadcast cart changes for companion plugins (e.g. SDL Free Shipping
-     Bar). Fire-and-forget and fully wrapped so a listener error can never
-     affect the cart's own behaviour. */
-  function emitCartUpdate(cart) {
-    try { document.dispatchEvent(new CustomEvent('sdl:cart:updated', { detail: cart })); }
-    catch (e) {}
-  }
-
   function refresh() {
     return API.fetchCart().then(function (cart) {
       state.cart = cart;
       if (els.root) render();
       syncNativeBadge(cart);
-      emitCartUpdate(cart);
       return cart;
     });
   }
@@ -537,8 +555,39 @@
     if (nextQty < 1) { removeItem(itemId, itemEl); return; }
     state.busy = true; setPending(itemEl, true);
     API.updateQty(token(), itemId, nextQty)
-      .then(function () { return refresh(); }).catch(function () {})
+      .then(function (res) {
+        if (res && res.ok) return null;                 // success
+        return (res ? res.text() : Promise.resolve('')).then(function (body) {
+          var msg = ''; try { msg = (JSON.parse(body) || {}).message || ''; } catch (e) {}
+          return msg || '__err__';                       // Squarespace's reason, e.g. stock limit
+        });
+      })
+      .catch(function () { return '__err__'; })
+      .then(function (errMsg) {
+        // Re-render from the real cart (reverts the un-applied change), then
+        // surface the reason on the affected line.
+        return refresh().then(function () { if (errMsg) showStockMessage(itemId, errMsg); });
+      })
       .then(function () { state.busy = false; });
+  }
+
+  // Show why a quantity change was refused (usually limited stock) on the item.
+  function showStockMessage(itemId, apiMsg) {
+    if (!els.body) return;
+    var sel = (window.CSS && CSS.escape) ? CSS.escape(itemId) : itemId;
+    var itemEl = els.body.querySelector('.sdl-sc__item[data-item-id="' + sel + '"]');
+    if (!itemEl) return;
+    var max = (String(apiMsg).match(/\d+/) || [])[0] || '';
+    var text = CFG.stockMessage
+      ? CFG.stockMessage.replace(/\{max\}/g, max).replace(/\{count\}/g, max).replace(/\{stock\}/g, max)
+      : ((apiMsg && apiMsg !== '__err__') ? apiMsg : 'Unable to update quantity.');
+    var info = itemEl.querySelector('.sdl-sc__item-info') || itemEl;
+    var msgEl = info.querySelector('.sdl-sc__item-msg');
+    if (!msgEl) { msgEl = document.createElement('div'); msgEl.className = 'sdl-sc__item-msg'; info.appendChild(msgEl); }
+    msgEl.textContent = text;
+    requestAnimationFrame(function () { msgEl.classList.add('is-visible'); });
+    clearTimeout(msgEl._t);
+    msgEl._t = setTimeout(function () { if (msgEl) msgEl.classList.remove('is-visible'); }, 4500);
   }
   function removeItem(itemId, itemEl) {
     if (state.busy || !token()) return;
@@ -672,7 +721,7 @@
             polling = false;
             lastCount = cartQty(cart);                        // keep the observer from re-firing
             if (CFG.openOnAdd) open(cart);
-            else { state.cart = cart; if (els.root) render(); syncNativeBadge(cart); emitCartUpdate(cart); }
+            else { state.cart = cart; if (els.root) render(); syncNativeBadge(cart); }
           } else { step(); }
         }).catch(function () { step(); });
       }, 350);
@@ -737,6 +786,46 @@
     syncCartStyles();   // background: capture title / buttons / continue URL early
     refresh();
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+
+  /* ---- 12. License gate -------------------------------------------- */
+  /* Runtime enforcement. The plugin only boots when its license key is valid
+     for THIS domain (or is an OEM/redistribution key). Design rules:
+       • FAIL OPEN — if the license API is unreachable, boot anyway. A broken
+         store is worse than a pirated one.
+       • Cache the verdict (24h) so we don't hit the network on every page view;
+         a booted-from-cache session keeps running until the next reload.
+       • Enforce only when the API is reachable AND explicitly says "invalid". */
+  var LICENSE_PLUGIN = 'slide-cart';
+  var LICENSE_API = (USER.licenseApi || 'https://license.squaredesignlab.com') + '/validate';
+
+  function licenseGate(onValid) {
+    var host = (location.hostname || '').replace(/^www\./, '');
+    var ck = 'sdl_lic_' + LICENSE_PLUGIN;
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(ck) || 'null'); } catch (e) {}
+    var fresh = cached && (Date.now() - cached.t) < 864e5; // 24h
+    var booted = false;
+    if (fresh && cached.valid) { booted = true; onValid(); }   // fast path from cache
+
+    fetch(LICENSE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: USER.license || '', domain: host, plugin: LICENSE_PLUGIN })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        try { localStorage.setItem(ck, JSON.stringify({ valid: !!d.valid, t: Date.now() })); } catch (e) {}
+        if (d && d.valid) { if (!booted) onValid(); }
+        else if (!booted) {
+          console.warn('[SDL Slide Cart] License not valid for "' + host +
+            '". Plugin inactive — add this site in your Square Design Lab config dashboard.');
+        }
+      })
+      .catch(function () { if (!booted) onValid(); });  // infra failure -> fail open
+  }
+
+  licenseGate(function () {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  });
 })();

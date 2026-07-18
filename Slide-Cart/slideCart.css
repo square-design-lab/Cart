@@ -41,6 +41,7 @@
   /* Remove icon follows the item text colour so it's always visible. */
   --sdl-sc-remove-color: var(--sdl-sc-name-color);
   --sdl-sc-remove-hover: #e53e3e;
+  --sdl-sc-icon-stroke: 1.5px;   /* stroke width of the trash remove icon */
 
   --sdl-sc-subtotal-bg: transparent;
   --sdl-sc-subtotal-border: #e5e5e5;
@@ -315,6 +316,33 @@
   transition: color 0.15s, opacity 0.15s;
 }
 .sdl-sc__remove:hover { opacity: 1; color: var(--sdl-sc-remove-hover); }
+/* The trash-can variant sits a touch bigger and keeps the text colour (no red
+   on hover) so its lid-opening animation reads clearly. */
+.sdl-sc__remove--trash { opacity: 0.7; }
+.sdl-sc__remove--trash:hover { color: var(--sdl-sc-remove-color); opacity: 1; }
+.sdl-sc__trash { display: block; width: 20px; height: 20px; overflow: visible; }
+.sdl-sc__ri-top, .sdl-sc__ri-bottom { transition: transform 0.125s ease-in-out; }
+.sdl-sc__remove:hover .sdl-sc__ri-top,
+.sdl-sc__remove:focus-visible .sdl-sc__ri-top {
+  transform: translate(calc(-1 * var(--sdl-sc-icon-stroke)), var(--sdl-sc-icon-stroke)) rotate(-15deg);
+}
+.sdl-sc__remove:hover .sdl-sc__ri-bottom,
+.sdl-sc__remove:focus-visible .sdl-sc__ri-bottom {
+  transform: translateY(var(--sdl-sc-icon-stroke));
+}
+
+/* Per-item message (e.g. "only 2 available"). */
+.sdl-sc__item-msg {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--sdl-sc-remove-hover);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+.sdl-sc__item-msg.is-visible { max-height: 4em; opacity: 1; }
 
 /* ---- Shared button look (checkout + continue) --------------------- */
 .sdl-sc__btn {
@@ -338,7 +366,8 @@
   letter-spacing: var(--sdl-sc-checkout-ls);
   text-transform: var(--sdl-sc-checkout-tt);
 }
-.sdl-sc__continue {
+.sdl-sc__continue,
+.sdl-sc__viewcart {
   background: var(--sdl-sc-continue-bg);
   color: var(--sdl-sc-continue-color);
   border-radius: var(--sdl-sc-continue-radius);
@@ -395,6 +424,15 @@
   font-weight: var(--sdl-sc-subprice-weight);
   letter-spacing: var(--sdl-sc-subprice-ls);
   color: var(--sdl-sc-subprice-color);
+}
+.sdl-sc__tax-note {
+  margin: 0 0 14px;
+  font-family: var(--sdl-sc-variant-font);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--sdl-sc-name-color);
+  opacity: 0.6;
+  text-align: center;
 }
 .sdl-sc__btns { display: flex; flex-direction: column; gap: 12px; }
 
