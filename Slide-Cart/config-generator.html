@@ -275,7 +275,9 @@ pre {
   background: none; border: none; cursor: pointer; margin-left: auto;
   color: #aaa; display: flex; align-items: center; padding: 4px; border-radius: 3px;
 }
-.pv-remove:hover { color: #e53e3e; }
+.pv-ri-top, .pv-ri-bottom { transition: transform 0.125s ease-in-out; }
+.pv-remove:hover .pv-ri-top { transform: translate(-1px, 1px) rotate(-15deg); }
+.pv-remove:hover .pv-ri-bottom { transform: translateY(1px); }
 
 .pv-footer {
   flex-shrink: 0; padding: 16px 20px 20px;
@@ -353,15 +355,13 @@ pre {
         </div>
       </div>
       <div class="field">
-        <div class="toggle-wrap">
-          <label class="toggle">
-            <input type="checkbox" id="showContinueWithItems">
-            <span class="toggle-track"></span>
-            <span class="toggle-thumb"></span>
-          </label>
-          <label for="showContinueWithItems">Show "Continue Shopping" when cart has items</label>
-        </div>
-        <div class="hint">Always shown when the cart is empty.</div>
+        <label>Footer button (when cart has items)</label>
+        <select id="footerButton">
+          <option value="none">None</option>
+          <option value="continue">Continue Shopping</option>
+          <option value="viewcart">View Cart</option>
+        </select>
+        <div class="hint">Shown next to Checkout. Continue Shopping is always shown when the cart is empty.</div>
       </div>
     </div>
 
@@ -395,6 +395,14 @@ pre {
         <label>Image Border Radius</label>
         <input type="text" id="imageRadius" value="0px" />
       </div>
+
+      <div class="field">
+        <label>Remove Item Icon</label>
+        <select id="removeIcon">
+          <option value="cross">Cross (×)</option>
+          <option value="trash">Trash can (opens on hover)</option>
+        </select>
+      </div>
     </div>
 
     <!-- LABELS -->
@@ -413,6 +421,30 @@ pre {
           <label>Continue Shopping</label>
           <input type="text" id="continueLabel" value="Continue Shopping" />
         </div>
+      </div>
+      <div class="field">
+        <label>View Cart Button</label>
+        <input type="text" id="viewCartLabel" value="View Cart" />
+      </div>
+
+      <div class="field">
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="showTaxNote" checked>
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+          <label for="showTaxNote">Show note above checkout button</label>
+        </div>
+      </div>
+      <div class="field">
+        <input type="text" id="taxNote" value="Taxes, discounts and shipping calculated at checkout." />
+      </div>
+
+      <div class="field">
+        <label>Out-of-stock message (optional)</label>
+        <input type="text" id="stockMessage" value="" placeholder="Leave blank to use Squarespace's message" />
+        <div class="hint">Shown when a quantity can't be increased. Use <b>{max}</b> for the number available.</div>
       </div>
     </div>
 
@@ -604,6 +636,7 @@ pre {
           <span class="pv-subtotal-label">Subtotal</span>
           <span class="pv-subtotal-val" id="pvSubtotal">$144.00</span>
         </div>
+        <div class="pv-tax-note" id="pvTaxNote" style="font-size:12px;text-align:center;opacity:.6;margin-bottom:12px">Taxes, discounts and shipping calculated at checkout.</div>
         <div class="pv-btns">
           <a href="#" class="pv-checkout" id="pvCheckout" onclick="return false;">Checkout</a>
           <a href="#" class="pv-view-cart" id="pvViewCart" onclick="return false;">Continue Shopping</a>
@@ -624,7 +657,12 @@ var DEFAULTS = {
   emptyMessage: 'Your cart is empty.',
   checkoutLabel: 'Checkout',
   continueLabel: 'Continue Shopping',
-  showContinueWithItems: false,
+  viewCartLabel: 'View Cart',
+  footerButton: 'none',
+  removeIcon: 'cross',
+  showTaxNote: true,
+  taxNote: 'Taxes, discounts and shipping calculated at checkout.',
+  stockMessage: '',
   useCustomColors: false,
   drawerWidth: '420px',
   animDuration: 320,
@@ -695,7 +733,12 @@ function collectConfig() {
     emptyMessage: getValue('emptyMessage'),
     checkoutLabel: getValue('checkoutLabel'),
     continueLabel: getValue('continueLabel'),
-    showContinueWithItems: getValue('showContinueWithItems'),
+    viewCartLabel: getValue('viewCartLabel'),
+    footerButton: getValue('footerButton'),
+    removeIcon: getValue('removeIcon'),
+    showTaxNote: getValue('showTaxNote'),
+    taxNote: getValue('taxNote'),
+    stockMessage: getValue('stockMessage'),
     useCustomColors: custom,
     drawerWidth: getValue('drawerWidth'),
     animDuration: getValue('animDuration'),
@@ -761,15 +804,31 @@ function updatePreview() {
   checkoutBtn.style.borderRadius = s.checkoutBorderRadius;
   checkoutBtn.style.fontSize = s.checkoutFontSize;
 
+  // Footer button (with items): none / continue / view cart.
   var viewCartBtn = document.getElementById('pvViewCart');
-  viewCartBtn.textContent = cfg.continueLabel || 'Continue Shopping';
-  viewCartBtn.style.display = cfg.showContinueWithItems ? '' : 'none';
+  if (cfg.footerButton === 'viewcart') { viewCartBtn.textContent = cfg.viewCartLabel || 'View Cart'; viewCartBtn.style.display = ''; }
+  else if (cfg.footerButton === 'continue') { viewCartBtn.textContent = cfg.continueLabel || 'Continue Shopping'; viewCartBtn.style.display = ''; }
+  else { viewCartBtn.style.display = 'none'; }
+
+  // Tax note.
+  var taxNote = document.getElementById('pvTaxNote');
+  taxNote.textContent = cfg.taxNote || '';
+  taxNote.style.display = cfg.showTaxNote ? '' : 'none';
+  taxNote.style.color = col('itemNameColor');
 
   document.querySelectorAll('.pv-item-img').forEach(function(img) { img.style.borderRadius = s.imageRadius; });
   document.querySelectorAll('.pv-item-name').forEach(function(n) { n.style.color = col('itemNameColor'); });
   // Variant = name colour at 0.6 opacity, mirroring the cart page.
   document.querySelectorAll('.pv-item-variant').forEach(function(v) { v.style.color = col('itemNameColor'); v.style.opacity = '0.6'; });
-  document.querySelectorAll('.pv-remove').forEach(function(r) { r.style.color = col('itemNameColor'); r.style.opacity = '0.55'; });
+
+  // Remove icon: cross or animated trash can.
+  var trashSvg = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="overflow:visible"><path class="pv-ri-bottom" d="M11.5 9v4.25M8.5 9v4.25M5.75 12.2V6h8.5c0 2.421 0 3.779 0 6.2 0 .853 0 1.447-.038 1.91-.037.453-.106.714-.207.911a2.498 2.498 0 0 1-.983 1.017c-.197.1-.458.17-.911.207-.463.037-1.057.038-1.91.038h-.4c-.853 0-1.447 0-1.91-.038-.453-.037-.714-.106-.911-.207a2.498 2.498 0 0 1-.984-1.017c-.1-.197-.17-.458-.207-.911C5.75 13.647 5.75 13.053 5.75 12.2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><path class="pv-ri-top" d="M4.25 6h11.5M8 5.25a2 2 0 1 1 4 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+  var crossSvg = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  document.querySelectorAll('.pv-remove').forEach(function(r) {
+    r.style.color = col('itemNameColor'); r.style.opacity = cfg.removeIcon === 'trash' ? '0.7' : '0.55';
+    var want = cfg.removeIcon === 'trash' ? 'trash' : 'cross';
+    if (r.dataset.icon !== want) { r.innerHTML = want === 'trash' ? trashSvg : crossSvg; r.dataset.icon = want; }
+  });
 
   updateCode(cfg);
 }

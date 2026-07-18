@@ -575,8 +575,11 @@
       .then(function (errMsg) {
         // Re-render from the real cart (reverts the un-applied change), then
         // surface the reason on the affected line.
-        return refresh().then(function () { if (errMsg) showStockMessage(itemId, errMsg); });
+        return refresh().then(function () {
+          if (errMsg) { try { showStockMessage(itemId, errMsg); } catch (e) {} }
+        });
       })
+      .catch(function () {})
       .then(function () { state.busy = false; });
   }
 
