@@ -539,11 +539,20 @@
   function toggle() { state.open ? close() : open(); }
 
   /* ---- 8. Data refresh + mutations --------------------------------- */
+  /* Broadcast cart changes for companion plugins (e.g. SDL Free Shipping
+     Bar). Fire-and-forget and fully wrapped so a listener error can never
+     affect the cart's own behaviour. */
+  function emitCartUpdate(cart) {
+    try { document.dispatchEvent(new CustomEvent('sdl:cart:updated', { detail: cart })); }
+    catch (e) {}
+  }
+
   function refresh() {
     return API.fetchCart().then(function (cart) {
       state.cart = cart;
       if (els.root) render();
       syncNativeBadge(cart);
+      emitCartUpdate(cart);
       return cart;
     });
   }
@@ -721,7 +730,7 @@
             polling = false;
             lastCount = cartQty(cart);                        // keep the observer from re-firing
             if (CFG.openOnAdd) open(cart);
-            else { state.cart = cart; if (els.root) render(); syncNativeBadge(cart); }
+            else { state.cart = cart; if (els.root) render(); syncNativeBadge(cart); emitCartUpdate(cart); }
           } else { step(); }
         }).catch(function () { step(); });
       }, 350);
