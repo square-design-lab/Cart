@@ -808,7 +808,10 @@
          a booted-from-cache session keeps running until the next reload.
        • Enforce only when the API is reachable AND explicitly says "invalid". */
   var LICENSE_PLUGIN = 'slide-cart';
-  var LICENSE_API = (USER.licenseApi || 'https://license.squaredesignlab.com') + '/validate';
+  // The key ships in the emailed loader block (window.sdlLicenses), separate
+  // from the public config snippet. settings.license kept for back-compat.
+  var LICENSE_KEY = (window.sdlLicenses && window.sdlLicenses[LICENSE_PLUGIN]) || USER.license || '';
+  var LICENSE_API = (window.sdlLicenseApi || USER.licenseApi || 'https://license.squaredesignlab.com') + '/validate';
 
   function licenseGate(onValid) {
     var host = (location.hostname || '').replace(/^www\./, '');
@@ -822,7 +825,7 @@
     fetch(LICENSE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: USER.license || '', domain: host, plugin: LICENSE_PLUGIN })
+      body: JSON.stringify({ key: LICENSE_KEY, domain: host, plugin: LICENSE_PLUGIN })
     })
       .then(function (r) { return r.json(); })
       .then(function (d) {
